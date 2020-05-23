@@ -12,7 +12,6 @@ public  class AddressFunctionalityController {
         Http h=new Http();
         HttpRequest req=new HttpRequest();
         req.setMethod('GET');
-        //req.setEndpoint('https://maps.googleapis.com/maps/api/place/autocomplete/json?input=222%okhla&key=AIzaSyC6AjYUQHAT7OzhsWnx33yra3lFfuAkr0U&sessiontoken=7272727');
         req.setEndpoint('https://maps.googleapis.com/maps/api/place/autocomplete/json?input="'+searchKey+'"&key='+API_KEY+'&sessionToken='+sessionToken);
         try{
             HttpResponse res=h.send(req);
