@@ -1,0 +1,156 @@
+public  class AddressFunctionalityController {
+    @AuraEnabled
+    public static List<SuggestedLocation> findAddress(String searchKey,String API_KEY,String sessionToken) {
+        if (String.isBlank(searchKey)) {
+            return new List<SuggestedLocation>();
+        }
+        sessionToken = sessionToken.replaceAll('\\s', '+');
+        searchKey = searchKey.replaceAll('\\s', '+');
+        //System.debug(searchKey);
+        Http h=new Http();
+        HttpRequest req=new HttpRequest();
+        req.setMethod('GET');
+        //req.setEndpoint('https://maps.googleapis.com/maps/api/place/autocomplete/json?input=222%okhla&key=AIzaSyC6AjYUQHAT7OzhsWnx33yra3lFfuAkr0U&sessiontoken=7272727');
+        req.setEndpoint('https://maps.googleapis.com/maps/api/place/autocomplete/json?input="'+searchKey+'"&key='+API_KEY+'&sessionToken='+sessionToken);
+        try{
+            HttpResponse res=h.send(req);
+            if(res.getStatusCode()==200){
+                //System.debug(res.getBody());
+                
+                AutoSuggestResult result=(AutoSuggestResult)JSON.deserialize(res.getBody(), AutoSuggestResult.class);
+                return result.predictions;
+                
+            }
+            else{
+                System.debug(res.getStatusCode()+' '+res.getStatus());
+                System.debug(res.getBody());
+                // System.debug('error');
+                throw new AuraHandledException('Error due to in fetching address. Error code '+res.getStatusCode());
+            }
+        }
+        catch(Exception e){
+            System.debug(e);
+            throw new AuraHandledException('Error due to in fetching address. Error code '+e);
+        }
+        
+
+    }
+    /*@AuraEnabled
+    public static Map<String,Double> getPlaceDetail(String place_id,String API_KEY,String sessionToken){
+        Map<String,Double> latLongPostalCap = new Map<String,Double>(); 
+         sessionToken = sessionToken.replaceAll('\\s', '%');
+         Http h=new Http();
+        HttpRequest req=new HttpRequest();
+        req.setMethod('GET');
+        req.setEndpoint('https://maps.googleapis.com/maps/api/place/details/json?placeid='+place_id+'&key='+API_KEY+'&sessionToken='+sessionToken);
+        try{
+            HttpResponse res=h.send(req);
+            if(res.getStatusCode()==200){
+                System.debug(res.getBody());
+                PlaceDetailResult placeDetail = (PlaceDetailResult)JSON.deserialize(res.getBody(), PlaceDetailResult.class);
+                System.debug(placeDetail);
+                if(placeDetail.result.address_components[placeDetail.result.address_components.size()-1].types[0]=='postal_code'){
+                    String postalcode = placeDetail.result.address_components[placeDetail.result.address_components.size()-1].long_name;
+                    latLongPostalCap.put('postalcode',Double.valueOf(postalcode));
+                }
+                else{
+                    latLongPostalCap.put('postalcode',null);
+                }
+                
+                latLongPostalCap.put('lat',placeDetail.result.geometry.location.lat);
+                latLongPostalCap.put('lng',placeDetail.result.geometry.location.lng);
+                return latLongPostalCap;
+                
+            }
+            else{
+                System.debug(res.getStatusCode()+' '+res.getStatus());
+                System.debug(res.getBody());
+                // System.debug('error');
+                throw new AuraHandledException('Error due to in fetching address. Error code '+res.getStatusCode());
+            }
+        }
+        catch(Exception e){
+            System.debug(e);
+            throw new AuraHandledException('Error due to in fetching address. Error code '+e);
+        }
+        
+    }*/
+    @AuraEnabled
+    public static PlaceDetailResult getPlaceDetail(String place_id,String API_KEY,String sessionToken){
+        Map<String,Double> latLongPostalCap = new Map<String,Double>(); 
+         sessionToken = sessionToken.replaceAll('\\s', '%');
+         Http h=new Http();
+        HttpRequest req=new HttpRequest();
+        req.setMethod('GET');
+        System.debug('place_id :'+place_id);
+        System.debug('API_KEY:'+API_KEY);
+        System.debug('sessionToken:'+sessionToken);
+        req.setEndpoint('https://maps.googleapis.com/maps/api/place/details/json?placeid='+place_id+'&key='+API_KEY+'&sessionToken='+sessionToken);
+        System.debug('URL is called');
+        try{
+            HttpResponse res=h.send(req);
+            if(res.getStatusCode()==200){
+               // System.debug(res.getBody());
+                PlaceDetailResult placeDetail = (PlaceDetailResult)JSON.deserialize(res.getBody(), PlaceDetailResult.class);
+                //System.debug(placeDetail);
+                if(placeDetail.result.address_components[placeDetail.result.address_components.size()-1].types[0]=='postal_code'){
+                    String postalcode = placeDetail.result.address_components[placeDetail.result.address_components.size()-1].long_name;
+                    latLongPostalCap.put('postalcode',Double.valueOf(postalcode));
+                }
+                else{
+                    latLongPostalCap.put('postalcode',null);
+                }
+                
+                latLongPostalCap.put('lat',placeDetail.result.geometry.location.lat);
+                latLongPostalCap.put('lng',placeDetail.result.geometry.location.lng);
+                return placeDetail;
+                
+            }
+            else{
+                System.debug(res.getStatusCode()+' '+res.getStatus());
+                System.debug(res.getBody());
+                // System.debug('error');
+                throw new AuraHandledException('Error due to in fetching address. Error code '+res.getStatusCode());
+            }
+        }
+        catch(Exception e){
+            System.debug(e);
+            throw new AuraHandledException('Error due to in fetching address. Error code '+e);
+        }
+        
+    }
+    public class SuggestedLocation{
+        @AuraEnabled public String  place_id;
+        @AuraEnabled public String description;
+        @AuraEnabled public List<termsList> terms;
+        
+    }
+    public class termsList{
+        @AuraEnabled public String value;
+        @AuraEnabled public Integer offset;
+    }
+     public class AutoSuggestResult{
+        @AuraEnabled public SuggestedLocation[] predictions{get;private set;}
+    }
+    //for place detail API
+    public class Address_components {
+    @AuraEnabled public String long_name;
+    @AuraEnabled public String short_name;
+    @AuraEnabled public List<String> types;
+  }
+    public class Geometry {
+    @AuraEnabled public Location location;
+  }
+    public class Location {
+    @AuraEnabled public Double lat;
+    @AuraEnabled public Double lng;
+  }
+    public class Result {
+    @AuraEnabled public List<Address_components> address_components;
+    @AuraEnabled public Geometry geometry;
+    
+  }
+    public class PlaceDetailResult {
+        @AuraEnabled public Result result;
+    }
+}
