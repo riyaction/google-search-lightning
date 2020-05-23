@@ -1,3 +1,5 @@
+/*Apex controller for Address Search Functionality and to consume Google API */
+
 public  class AddressFunctionalityController {
     @AuraEnabled
     public static List<SuggestedLocation> findAddress(String searchKey,String API_KEY,String sessionToken) {
